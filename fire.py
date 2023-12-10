@@ -14,18 +14,27 @@ class Persons_Finance:
             birth_year=1996, 
             gross_income=6E5,
             saved=1E6, 
-            savings_rate=0.3, survive_rate=0.2, bills_rate=0.5, 
-            tax_rate=0.3):
+            necessities_rate=0.6, wants_rate=0.06, savings_rate=0.34, 
+            tax_rate=0.3,
+            necessities={'Food': 3E3, 'Other': 4E3},
+            housing={'Loan': 1.75E6, 'Years': 20, 'Interest': 0.0539, 'Serial Loan': False, 'Bills': 3.5E3, 'Rent': 9E3, 'Extra contributions': 0},
+            student_loan={'Loan': 4.5E5, 'Years': 20, 'Interest': 0.048, 'Serial Loan': False, 'Extra contributions': 0},
+            other_debt={'Loan': 7.7E5, 'Years': 16, 'Interest': 0.035, 'Serial Loan': True, 'Extra contributions': 0}
+            ):
         self.name = name
         self.year = datetime.date.today().year # The year
         self.age = datetime.date.today().year - birth_year # Calculating the age
         self.gross = gross_income # yearly income before tax
         self.start = saved # how much one already have invested
         self.savings_rate = savings_rate # percentage of how much one wants to save
-        self.survive = survive_rate # percentage of how much one wants to use on needs
-        self.bills_rate = bills_rate # percentage of how much one uses on fixed bills
-        self.ds = 1-(savings_rate+bills_rate) # percentage to use on oneself
+        self.necessities_rate = necessities_rate # percentage of how much one uses on fixed bills
+        self.wants_rate = wants_rate # percentage of how much one uses on wants
         self.tr = tax_rate # percentage of how much one must pay in tax
+
+        self.necessities = necessities
+        self.housing = housing
+        self.student_loan = student_loan
+        self.other_debt = other_debt
 
         self.netto = gross_income*(1-tax_rate) # yearly income after tax
         self.tax = gross_income*tax_rate # yearly amount which is paid to taxes
@@ -34,7 +43,7 @@ class Persons_Finance:
         self.invest = savings_rate*self.mi # amount to invest each month
 
 
-    def living_expenses(self, income, housing, food, other, savings, debt):
+    def living_expenses(self):
         """Calculates the monthly living expenses which goes to essential needs, 
         such as rent, food, bills and etc.
 
@@ -54,7 +63,8 @@ class Persons_Finance:
         'September', 'October', 'November', 'December']
 
         df_Actual = {}
-        df_Expected = {} # Following the 50/30/20 budgetting way
+        df_Expected = {} # Approximately following the 50/30/20 budgetting way 
+        
         df_Expected['Income'] = [self.mi]
         df_Expected['Necessities'] = [self.mi*0.6]
         df_Expected['Wants'] = [self.mi*0.06]
@@ -64,12 +74,22 @@ class Persons_Finance:
         df_Expected['Expected Living Cost'] = [expected_costs]
         
         df_Actual['Monthly Expenses'] = [months[month-1]]
-        necessities = housing + food + debt
-        df_Actual['Income'] = income
-        df_Actual['Necessities'] = [necessities]
-        df_Actual['Wants'] = [other]
-        df_Actual['Savings'] = [savings]
-        df_Actual['Actual Living Cost'] = [necessities + other + savings]
+        
+        house_df = self.calculate_Loan(self.housing['Loan'], self.housing['Years'], self.housing['Interest'], 'Housing', self.housing['Serial Loan'])
+        student_debt_df = self.calculate_Loan(self.student_loan['Loan'], self.student_loan['Years'], self.student_loan['Interest'], 'Student Loan', self.student_loan['Serial Loan'])
+        other_debt_df = self.calculate_Loan(self.other_debt['Loan'], self.other_debt['Years'], self.other_debt['Interest'], 'Other Debt', self.other_debt['Serial Loan'])
+        
+        df_Actual['Income'] = self.mi + self.housing['Rent']
+        df_Actual['Housing'] = house_df['Monthly Payment'].values[0]
+        df_Actual['Student Loan'] = student_debt_df['Monthly Payment'].values[0]
+        df_Actual['Other Debt'] = other_debt_df['Monthly Payment'].values[0]
+        df_Actual['Shared Costs'] = self.housing['Bills']
+
+
+        df_Actual['Food'] = self.necessities['Food']
+        df_Actual['Other'] = self.necessities['Other'] 
+        df_Actual['Savings'] = self.invest
+        df_Actual['Actual Living Cost'] = df_Actual['Housing'] + df_Actual['Student Loan'] + df_Actual['Food'] + df_Actual['Other'] + df_Actual['Shared Costs'] + df_Actual['Savings']   
 
         df_Expected = pd.DataFrame(df_Expected)
         df_Actual = pd.DataFrame(df_Actual)
@@ -80,6 +100,11 @@ class Persons_Finance:
 
         print(tabulate(df_Expected, headers='keys', tablefmt='fancy_grid'))
         print(tabulate(df_Actual, headers='keys', tablefmt='fancy_grid'))
+
+        print(tabulate(house_df, headers='keys', tablefmt='fancy_grid'))
+        print(tabulate(student_debt_df, headers='keys', tablefmt='fancy_grid'))
+        print(tabulate(other_debt_df, headers='keys', tablefmt='fancy_grid'))
+
 
 
     def serial_loan(self, loan, Years, interest_rate, loan_name, extra_contributions=0):
@@ -185,8 +210,9 @@ class Persons_Finance:
         df.loc[df.index[-1], 'Monthly Payment',] = None
         df.loc[df.index[-1], 'Residual Loan of ' + loan_name,] = None
 
-        print(tabulate(df, headers='keys', tablefmt='fancy_grid'))
         
+        #print(tabulate(df, headers='keys', tablefmt='fancy_grid'))
+        return df
 
 
     def compound_Interest(self, Interest, Years, Goal, Invest=0):
@@ -245,13 +271,13 @@ class Persons_Finance:
 
 if __name__ == '__main__':
     life = Persons_Finance()
-    life.living_expenses(income=3.5E4, housing=1.4E4, food=3E3, other=2E3, savings=1.3E4, debt=3E3)
+    life.living_expenses()
 
 
-    life.calculate_Loan(Loan=1.75E6, Years=20, interest_rate=0.0539, loan_name='Mortgage', serial_loan=False, extra_contributions=0)
+    #life.calculate_Loan(Loan=1.75E6, Years=20, interest_rate=0.0539, loan_name='Mortgage', serial_loan=False, extra_contributions=0)
     #life.calculate_Loan(Loan=1.77E6, Years=25, interest_rate=0.0539, loan_name='Mortgage', serial_loan=True, extra_contributions=0)
 
-    life.calculate_Loan(Loan=4.53E5, Years=20, interest_rate=0.048, loan_name='Student Loan', serial_loan=False, extra_contributions=0)
-    life.calculate_Loan(Loan=7.75E5, Years=16, interest_rate=0.035, loan_name='Neighbourhood Debt', serial_loan=True, extra_contributions=0)
+    #life.calculate_Loan(Loan=4.53E5, Years=20, interest_rate=0.048, loan_name='Student Loan', serial_loan=False, extra_contributions=0)
+    #life.calculate_Loan(Loan=7.75E5, Years=16, interest_rate=0.035, loan_name='Neighbourhood Debt', serial_loan=True, extra_contributions=0)
 
     life.compound_Interest(Interest=0.08, Years=20, Goal=1E7, Invest=1.3E4)
