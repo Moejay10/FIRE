@@ -14,8 +14,8 @@ class Persons_Finance:
             birth_year=1996, 
             gross_income=6E5,
             saved=1E6, 
-            necessities_rate=0.6, wants_rate=0.06, savings_rate=0.34, 
-            tax_rate=0.3,
+            necessities_rate=0.59, wants_rate=0.05, savings_rate=0.36, 
+            tax_rate=0.28,
             necessities={'Food': 3E3, 'Other': 4E3},
             housing={'Loan': 1.75E6, 'Years': 20, 'Interest': 0.0539, 'Serial Loan': False, 'Bills': 3.5E3, 'Rent': 9E3, 'Extra contributions': 0},
             student_loan={'Loan': 4.5E5, 'Years': 20, 'Interest': 0.048, 'Serial Loan': False, 'Extra contributions': 0},
@@ -65,13 +65,14 @@ class Persons_Finance:
         df_Actual = {}
         df_Expected = {} # Approximately following the 50/30/20 budgetting way 
         
-        df_Expected['Income'] = [self.mi]
-        df_Expected['Necessities'] = [self.mi*0.6]
-        df_Expected['Wants'] = [self.mi*0.06]
-        df_Expected['Savings'] = [self.mi*0.34]
+        df_Expected['Job Income'] = self.mi
+        df_Expected['Rent Income'] = self.housing['Rent']
+        df_Expected['Necessities'] = self.mi*self.necessities_rate + self.housing['Rent']
+        df_Expected['Wants'] = self.mi*self.wants_rate
+        df_Expected['Savings'] = self.mi*self.savings_rate
         df_Expected['Monthly Budget'] = [months[month-1]]
-        expected_costs = self.mi*0.6 + self.mi*0.1 + self.mi*0.3
-        df_Expected['Expected Living Cost'] = [expected_costs]
+        expected_costs = self.mi*self.necessities_rate + self.mi*self.wants_rate + self.mi*self.savings_rate + self.housing['Rent']
+        df_Expected['Expected Living Cost'] = expected_costs
         
         df_Actual['Monthly Expenses'] = [months[month-1]]
         
@@ -79,7 +80,8 @@ class Persons_Finance:
         student_debt_df = self.calculate_Loan(self.student_loan['Loan'], self.student_loan['Years'], self.student_loan['Interest'], 'Student Loan', self.student_loan['Serial Loan'])
         other_debt_df = self.calculate_Loan(self.other_debt['Loan'], self.other_debt['Years'], self.other_debt['Interest'], 'Other Debt', self.other_debt['Serial Loan'])
         
-        df_Actual['Income'] = self.mi + self.housing['Rent']
+        df_Actual['Job Income'] = self.mi
+        df_Actual['Rent Income'] = self.housing['Rent']
         df_Actual['Housing'] = house_df['Monthly Payment'].values[0]
         df_Actual['Student Loan'] = student_debt_df['Monthly Payment'].values[0]
         df_Actual['Other Debt'] = other_debt_df['Monthly Payment'].values[0]
@@ -104,6 +106,20 @@ class Persons_Finance:
         print(tabulate(house_df, headers='keys', tablefmt='fancy_grid'))
         print(tabulate(student_debt_df, headers='keys', tablefmt='fancy_grid'))
         print(tabulate(other_debt_df, headers='keys', tablefmt='fancy_grid'))
+
+        # Create a Pandas Excel writer using XlsxWriter as the engine.
+        writer = pd.ExcelWriter("Personal_Finances.xlsx", engine="xlsxwriter")
+
+        # Position the dataframes in the worksheet.
+        df_Expected.to_excel(writer, sheet_name="FIRE")  # Default position, cell A1.
+        df_Actual.to_excel(writer, sheet_name="FIRE", startrow=3)
+        
+        house_df.to_excel(writer, sheet_name="FIRE", startrow=6)
+        student_debt_df.to_excel(writer, sheet_name="FIRE", startrow=6, startcol=9)
+        other_debt_df.to_excel(writer, sheet_name="FIRE", startrow=6, startcol=18)
+
+        # Close the Pandas Excel writer and output the Excel file.
+        writer.close()
 
 
 
@@ -256,13 +272,13 @@ class Persons_Finance:
         df.plot(x='Year', y=['Total', 'Contributed', 'Interest'] , style='.-')
         df.set_index('Year', inplace=True)
 
-        plt.xticks(range(years[0],years[-1]))
+        #plt.xticks(range(years[0],years[-1]))
         plt.plot(years, target, '--k')
         plt.legend(['Total', 'Contributed', 'Interest', 'Goal'])
         plt.xlabel("Year")
         plt.ylabel("Money (kr)")
         plt.title("Financial Independence Retire Early")
-        plt.show()
+        plt.savefig('FIRE.png')
 
     
     def net_Worth(self):
@@ -280,4 +296,4 @@ if __name__ == '__main__':
     #life.calculate_Loan(Loan=4.53E5, Years=20, interest_rate=0.048, loan_name='Student Loan', serial_loan=False, extra_contributions=0)
     #life.calculate_Loan(Loan=7.75E5, Years=16, interest_rate=0.035, loan_name='Neighbourhood Debt', serial_loan=True, extra_contributions=0)
 
-    life.compound_Interest(Interest=0.08, Years=20, Goal=1E7, Invest=1.3E4)
+    life.compound_Interest(Interest=0.08, Years=25, Goal=1E7, Invest=0)
