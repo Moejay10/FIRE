@@ -16,10 +16,10 @@ class Persons_Finance:
             saved=1E6, 
             necessities_rate=0.59, wants_rate=0.05, savings_rate=0.36, 
             tax_rate=0.28,
-            necessities={'Food': 3E3, 'Other': 4E3},
-            housing={'Loan': 1.75E6, 'Years': 20, 'Interest': 0.0539, 'Serial Loan': False, 'Shared Costs': 3.8E3, 'Rent': 9E3, 'Extra contributions': 0},
+            necessities={'Food': 3E3, 'Other': 4.5E3},
+            housing={'Loan': 1.75E6, 'Years': 20, 'Interest': 0.0539, 'Serial Loan': False, 'Shared Costs': 3.7E3, 'Rent': 9E3, 'Extra contributions': 0},
             student_loan={'Loan': 4.5E5, 'Years': 20, 'Interest': 0.048, 'Serial Loan': False, 'Extra contributions': 0},
-            other_debt={'Loan': 7.6E5, 'Years': 12, 'Interest': 0.031, 'Serial Loan': False, 'Extra contributions': 0}
+            other_debt={'Loan': 7.7E5, 'Years': 12, 'Interest': 0.031, 'Serial Loan': False, 'Extra contributions': 0}
             ):
         self.name = name
         self.year = datetime.date.today().year # The year
