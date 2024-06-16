@@ -12,35 +12,32 @@ class Persons_Finance:
     def __init__(self, 
             name="Mohamed Ismail", 
             birth_year=1996, 
-            gross_income=6E5,
-            saved=1E6, 
-            necessities_rate=0.59, wants_rate=0.05, savings_rate=0.36, 
+            salary_income=6.5E5,
+            bonus_income=2.5E5,
+            saved=1.3E6, 
+            necessities_rate=0.52, wants_rate=0.1, savings_rate=0.38, 
             tax_rate=0.28,
-            necessities={'Food': 3E3, 'Other': 4.5E3},
-            housing={'Loan': 1.75E6, 'Years': 20, 'Interest': 0.0539, 'Serial Loan': False, 'Shared Costs': 3.7E3, 'Rent': 9E3, 'Extra contributions': 0},
-            student_loan={'Loan': 4.5E5, 'Years': 20, 'Interest': 0.048, 'Serial Loan': False, 'Extra contributions': 0},
-            other_debt={'Loan': 7.7E5, 'Years': 12, 'Interest': 0.031, 'Serial Loan': False, 'Extra contributions': 0}
+            necessities={'Food': 3.5E3, 'Other': 4E3},
+            housing={'Loan': 1.75E6, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 20, 'Interest': 0.0565, 'Serial Loan': False, 'Shared Costs': 4E3, 'Rent': 9E3, 'Extra contributions': 1E3},
+            student_loan={'Loan': 4.52E5, 'Start Time': datetime.datetime.strptime('15/02/2024', '%d/%m/%Y').date(), 'Years': 19, 'Interest': 0.0532, 'Serial Loan': False, 'Extra contributions': 1E3},
+            other_debt={'Loan': 7.7E5, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 12, 'Interest': 0.031, 'Serial Loan': False, 'Extra contributions': 0}
             ):
         self.name = name
-        self.year = datetime.date.today().year # The year
+        self.year = datetime.date.today().year # The year 
+        self.birth_year = birth_year
         self.age = datetime.date.today().year - birth_year # Calculating the age
-        self.gross = gross_income # yearly income before tax
+        self.salary = salary_income # Salary Income
+        self.bonus = bonus_income # Bonuses earned
+        self.gross = salary_income + bonus_income # yearly income before tax
         self.start = saved # how much one already have invested
         self.savings_rate = savings_rate # percentage of how much one wants to save
         self.necessities_rate = necessities_rate # percentage of how much one uses on fixed bills
         self.wants_rate = wants_rate # percentage of how much one uses on wants
-        self.tr = tax_rate # percentage of how much one must pay in tax
 
         self.necessities = necessities
         self.housing = housing
         self.student_loan = student_loan
         self.other_debt = other_debt
-
-        self.netto = gross_income*(1-tax_rate) # yearly income after tax
-        self.tax = gross_income*tax_rate # yearly amount which is paid to taxes
-
-        self.mi = self.netto/12 # monthly income after tax 
-        self.invest = savings_rate*self.mi # amount to invest each month
 
 
     def living_expenses(self):
@@ -64,6 +61,20 @@ class Persons_Finance:
 
         df_Actual = {}
         df_Expected = {} # Approximately following the 50/30/20 budgetting way 
+
+
+        house_df = self.calculate_Loan(self.housing['Loan'], self.housing['Start Time'], self.housing['Years'], self.housing['Interest'], 'Housing', self.housing['Serial Loan'], self.housing['Extra contributions'])
+        student_debt_df = self.calculate_Loan(self.student_loan['Loan'], self.student_loan['Start Time'], self.student_loan['Years'], self.student_loan['Interest'], 'Student Loan', self.student_loan['Serial Loan'], self.student_loan['Extra contributions'])
+        other_debt_df = self.calculate_Loan(self.other_debt['Loan'], self.other_debt['Start Time'], self.other_debt['Years'], self.other_debt['Interest'], 'Shared Loan', self.other_debt['Serial Loan'], self.other_debt['Extra contributions'])
+        
+        tax_df = self.tax_calculator(house_df, student_debt_df, other_debt_df)
+
+        print(self.tr)
+
+        self.netto = self.salary*(1-self.tr) # yearly income after tax
+        self.tax = self.salary*self.tr # yearly amount which is paid to taxes
+        self.mi = (self.netto/12) # monthly income after tax 
+        self.invest = self.savings_rate*self.mi # amount to invest each month
         
         df_Expected['Job Income'] = self.mi
         df_Expected['Rent Income'] = self.housing['Rent']
@@ -76,22 +87,26 @@ class Persons_Finance:
         
         df_Actual['Monthly Expenses'] = [months[month-1]]
         
-        house_df = self.calculate_Loan(self.housing['Loan'], self.housing['Years'], self.housing['Interest'], 'Housing', self.housing['Serial Loan'])
-        student_debt_df = self.calculate_Loan(self.student_loan['Loan'], self.student_loan['Years'], self.student_loan['Interest'], 'Student Loan', self.student_loan['Serial Loan'])
-        other_debt_df = self.calculate_Loan(self.other_debt['Loan'], self.other_debt['Years'], self.other_debt['Interest'], 'Other Debt', self.other_debt['Serial Loan'])
-        
         df_Actual['Job Income'] = self.mi
         df_Actual['Rent Income'] = self.housing['Rent']
         df_Actual['Housing'] = house_df['Monthly Payment'].values[0]
         df_Actual['Student Loan'] = student_debt_df['Monthly Payment'].values[0]
-        df_Actual['Other Debt'] = other_debt_df['Monthly Payment'].values[0]
+        df_Actual['Shared Loan'] = other_debt_df['Monthly Payment'].values[0]
         df_Actual['Shared Costs'] = self.housing['Shared Costs']
 
 
         df_Actual['Food'] = self.necessities['Food']
         df_Actual['Other'] = self.necessities['Other'] 
         df_Actual['Savings'] = self.invest
-        df_Actual['Actual Living Cost'] = df_Actual['Housing'] + df_Actual['Student Loan'] + df_Actual['Other Debt'] + df_Actual['Food'] + df_Actual['Other'] + df_Actual['Shared Costs'] + df_Actual['Savings']   
+        df_Actual['Actual Living Cost'] = df_Actual['Housing'] + df_Actual['Student Loan'] + df_Actual['Shared Loan'] + df_Actual['Food'] + df_Actual['Other'] + df_Actual['Shared Costs'] + df_Actual['Savings']   
+
+        diff = df_Expected['Expected Living Cost'] - df_Actual['Actual Living Cost'] # Calculating the difference in budgeted and actual costs
+        if diff > 0:
+            df_Actual['Savings'] = df_Actual['Savings'] + diff
+            df_Actual['Actual Living Cost'] = df_Actual['Actual Living Cost'] + diff
+        else:
+            df_Actual['Savings'] = df_Actual['Savings'] - diff
+            df_Actual['Actual Living Cost'] = df_Actual['Actual Living Cost'] - diff
 
         df_Expected = pd.DataFrame(df_Expected)
         df_Actual = pd.DataFrame(df_Actual)
@@ -123,7 +138,7 @@ class Persons_Finance:
 
 
 
-    def serial_loan(self, loan, Years, interest_rate, loan_name, extra_contributions=0):
+    def serial_loan(self, loan, start_time, Years, interest_rate, loan_name, extra_contributions=0):
         """
         Calculates the loan amount for a series loan            
 
@@ -137,16 +152,22 @@ class Persons_Finance:
 
         Start = loan
         years = np.arange(0, Years)
+        dt = start_time #datetime.datetime.today()
+        month = dt.month
+        months = {'1': 12, '2': 11, '3': 10, '4': 9, '5': 8, '6': 7, '7': 6, '8': 5,
+        '9': 4, '10': 3, '11': 2, '12': 1}
+        time_factor = (months[str(month)]/12)
 
         F = {}
         F['Age'] = years
         # Calculating the first terms
         F['Deductions'] = [Start/(Years)] * len(years)
-        F['Interest'] = [Start*interest_rate]
-        F['Term Amount'] = [(Start/(Years)) + Start*interest_rate]
+        F['Deductions'][0] = F['Deductions'][0]*time_factor
+        F['Interest'] = [Start*interest_rate*time_factor]
+        F['Term Amount'] = [(Start/(Years)) + Start*interest_rate*time_factor]
         F['Monthly Payment'] = [(Start/(Years) + Start*interest_rate)/12]
 
-        F['Residual Loan of ' + loan_name] = [Start - (Start/(Years))]
+        F['Residual Loan of ' + loan_name] = [Start - F['Deductions'][0] - extra_contributions*12*time_factor]
 
         for y in range(1, len(years)):
             deductions = F['Deductions'][y]
@@ -158,7 +179,7 @@ class Persons_Finance:
         
         return F
     
-    def annuity_loan(self, loan, Years, interest_rate, loan_name, extra_contributions=0):
+    def annuity_loan(self, loan, start_time, Years, interest_rate, loan_name, extra_contributions=0):
         """
         Calculates the loan amount for a annuity loan            
 
@@ -174,26 +195,34 @@ class Persons_Finance:
         Terms = Years * 12
         monthly_interest = (1+interest_rate)**(1/12) - 1
         years = np.arange(0, Years)
+        dt = start_time #datetime.datetime.today()
+        month = dt.month
+        months = {'1': 12, '2': 11, '3': 10, '4': 9, '5': 8, '6': 7, '7': 6, '8': 5,
+        '9': 4, '10': 3, '11': 2, '12': 1}
+        time_factor = (months[str(month)]/12)
+        
 
         F = {}
         F['Age'] = years 
         # Calculating the first terms
         F['Monthly Payment'] = [Start*((monthly_interest)/(1-(1+monthly_interest)**(-Terms)))] * len(years)
-        F['Interest'] = [Start*interest_rate]
+        F['Interest'] = [Start*interest_rate*time_factor]
         F['Term Amount'] = [F['Monthly Payment'][0]*12] * len(years)
+        F['Term Amount'][0] = F['Term Amount'][0]*time_factor
         F['Deductions'] = [F['Term Amount'][0] - F['Interest'][0]]
-        F['Residual Loan of ' + loan_name] = [Start - F['Deductions'][0]]
+        F['Residual Loan of ' + loan_name] = [Start - F['Deductions'][0] - extra_contributions*12*time_factor]
 
         for y in range(1, len(years)):
             F['Interest'].append(F['Residual Loan of ' + loan_name][y-1]*interest_rate)
             F['Deductions'].append(F['Term Amount'][y] - F['Interest'][y])
-            F['Residual Loan of ' + loan_name].append(F['Residual Loan of ' + loan_name][y-1] - F['Deductions'][y])
+            F['Residual Loan of ' + loan_name].append(F['Residual Loan of ' + loan_name][y-1] - F['Deductions'][y] - extra_contributions*12)
+
         
         return F
     
 
 
-    def calculate_Loan(self, Loan, Years, interest_rate, loan_name, serial_loan=False, extra_contributions=0):
+    def calculate_Loan(self, Loan, start_time, Years, interest_rate, loan_name, serial_loan=False, extra_contributions=0):
         """
         Calculates the mortgage and does estimations on it
 
@@ -207,19 +236,25 @@ class Persons_Finance:
         """
 
         if serial_loan:
-            F = self.serial_loan(Loan, Years, interest_rate, loan_name, extra_contributions)
+            F = self.serial_loan(Loan, start_time, Years, interest_rate, loan_name, extra_contributions)
         else:
-            F = self.annuity_loan(Loan, Years, interest_rate, loan_name, extra_contributions)
+            F = self.annuity_loan(Loan, start_time, Years, interest_rate, loan_name, extra_contributions)
         
         years = np.arange(0, Years)
-        ages = years + self.age
-        years += self.year 
+        ages = years + (start_time.year - self.birth_year)
+        years += start_time.year 
         F['Age'] = ages
         F['Year'] = years
         df = pd.DataFrame(F)
+
         df.set_index('Year', inplace=True)
         df = df[['Age', 'Monthly Payment', 'Deductions', 'Interest', 'Term Amount', 'Residual Loan of ' + loan_name]]
         df.rename(columns = {'Deductions': 'Yearly Deductions', 'Interest': 'Yearly Interest', 'Term Amount': 'Yearly Term'}, inplace=True)
+
+        # checking the element is < 0 
+        df[df < 0] = 0
+        df.loc[(df['Yearly Interest'] == 0), ['Monthly Payment', 'Yearly Deductions', 'Yearly Term']] = 0
+
         df.loc['Total']= df.sum() #add total row
         #set last value in team column to be blank
         df.loc[df.index[-1], 'Age',] = None
@@ -281,6 +316,74 @@ class Persons_Finance:
         plt.savefig('FIRE.png')
 
     
+    def tax_calculator(self, df1, df2, df3):
+
+        a = list(df1['Yearly Interest'])[:-1]
+        b = list(df2['Yearly Interest'])[:-1]
+        c = list(df3['Yearly Interest'])[:-1]
+        
+        l_df1, l_df2, l_df3 = len(df1), len(df2), len(df3)
+        # now find the max
+        max_len = max(l_df1, l_df2, l_df3)
+
+        # Resize all according to the determined max length
+        if not max_len == l_df1:
+            a.extend([0]*(max_len - l_df1))
+        if not max_len == l_df2:
+            b.extend([0]*(max_len - l_df2))
+        if not max_len == l_df3:
+            c.extend([0]*(max_len - l_df3))
+    
+
+        max_len -= 1 # To make sure the length of arrays stay same length
+
+        # Deductions
+        minimun_deduction = [104450]*max_len
+        person_deduction = [88250]*max_len
+
+        # Taxes
+        social_security_tax = 0.082 # Off the gross inncome
+        state_tax = 0.23 # On the income after all deductions have been deducted
+        stage1_tax = 0.017 # For income between 200k - 300k
+        stage2_tax = 0.04 # For income between 300k - 670k
+        stage3_tax = 0.136 # For income between 670k - 940k
+        
+        # Make the column names
+        years = self.year + np.arange(0, max_len)
+        ages = self.age + np.arange(0, max_len)
+        col1 = df1.columns.tolist()[-1].split()[-1]
+        col2 = df2.columns.tolist()[-1].split()[-2]
+        col3 = df3.columns.tolist()[-1].split()[-2]
+
+        # Now the all list is same length and create dataframe
+        interest_df = pd.DataFrame({'Year': years, 'Age': ages, col1 + ' Interest': a, col2 + ' Interest': b, col3 + ' Interest': c}) 
+        tax_df = pd.DataFrame()
+        tax_df['Year'] = interest_df['Year']
+        tax_df['Age'] = interest_df['Age']
+        tax_df['Gross Salary'] = [self.gross]*max_len
+
+        interest_df['Total Debt Interest'] = interest_df[col1 + ' Interest'] + interest_df[col2 + ' Interest'] + interest_df[col3 + ' Interest']
+        tax_df['Debt Deduction'] = interest_df['Total Debt Interest']
+        tax_df['Minimum Deduction'] = minimun_deduction
+        tax_df['Personal Deduction'] = person_deduction
+        tax_df['Social Security Tax'] = tax_df['Gross Salary']*social_security_tax
+        tax_df['State Tax'] = (tax_df['Gross Salary'] - tax_df['Debt Deduction'] - tax_df['Minimum Deduction'] - tax_df['Personal Deduction'])*state_tax
+        
+        if self.gross <= 2.93E5:
+            tax_df['Stage Tax'] = np.array([(8.54E5-self.gross)*stage1_tax]*max_len)
+        elif self.gross <= 6.7E5:
+            tax_df['Stage Tax'] = np.array([8.5E4*stage1_tax]*max_len) + np.array([(6.7E5-self.gross)*stage2_tax]*max_len)
+        elif self.gross <= 9.38E5:
+            tax_df['Stage Tax'] = np.array([8.5E4*stage1_tax]*max_len) + np.array([3.77E5*stage2_tax]*max_len) + np.array([(self.gross-6.7E5)*stage3_tax]*max_len)
+
+        tax_df['Total Tax'] = tax_df['Social Security Tax'] + tax_df['State Tax'] + tax_df['Stage Tax']
+
+        self.tr = tax_df['Total Tax'].values[1]/self.gross
+
+        return tax_df
+
+    
+    
     def net_Worth(self):
         pass
 
@@ -296,4 +399,4 @@ if __name__ == '__main__':
     #life.calculate_Loan(Loan=4.53E5, Years=20, interest_rate=0.048, loan_name='Student Loan', serial_loan=False, extra_contributions=0)
     #life.calculate_Loan(Loan=7.75E5, Years=16, interest_rate=0.035, loan_name='Neighbourhood Debt', serial_loan=True, extra_contributions=0)
 
-    life.compound_Interest(Interest=0.08, Years=25, Goal=1E7, Invest=0)
+    life.compound_Interest(Interest=0.1, Years=25, Goal=1E7, Invest=0)
