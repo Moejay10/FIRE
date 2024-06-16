@@ -15,19 +15,19 @@ Financial Independence, Retire Early (FIRE) is a movement of people devoted to a
 - Make a directory for manage the virtual environment files.
 - Install pipenv using pip.
 - Go into the virtual env and initiate the virtual env:
-'''
+```
 $ pipenv install
-'''
+```
 - To start the virtual env, use the command:
-'''
+```
 $ pipenv shell
-'''
+```
 - Now you can call the script you want inside the virtual env. If there are some packages missing
 , you can install packages for the virtual env by using the command:
-'''
+```
 $ pipenv install <package>
-'''
+```
 - To exit the virtual env, use the command:
-'''
+```
 $ exit
-'''
+```
