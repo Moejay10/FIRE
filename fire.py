@@ -13,13 +13,13 @@ class Persons_Finance:
             name="Mohamed Ismail", 
             birth_year=1996, 
             salary_income=6.5E5,
-            bonus_income=2.5E5,
+            bonus_income=1.5E5,
             saved=1.3E6, 
             necessities_rate=0.52, wants_rate=0.1, savings_rate=0.38, 
-            tax_rate=0.28,
-            necessities={'Food': 3.5E3, 'Other': 4E3},
+            tax_info={'min_deduction': 104450, 'personal_deduction': 88250, 'social_security_tax': 0.082, 'state_tax': 0.23, 'stage_tax': [0.017, 0.04, 0.136]},
+            necessities={'Food': 3E3, 'Other': 4.5E3},
             housing={'Loan': 1.75E6, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 20, 'Interest': 0.0565, 'Serial Loan': False, 'Shared Costs': 4E3, 'Rent': 9E3, 'Extra contributions': 1E3},
-            student_loan={'Loan': 4.52E5, 'Start Time': datetime.datetime.strptime('15/02/2024', '%d/%m/%Y').date(), 'Years': 19, 'Interest': 0.0532, 'Serial Loan': False, 'Extra contributions': 1E3},
+            student_loan={'Loan': 4.48E5, 'Start Time': datetime.datetime.strptime('15/06/2024', '%d/%m/%Y').date(), 'Years': 19, 'Interest': 0.054, 'Serial Loan': False, 'Extra contributions': 1E3},
             other_debt={'Loan': 7.7E5, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 12, 'Interest': 0.031, 'Serial Loan': False, 'Extra contributions': 0}
             ):
         self.name = name
@@ -34,10 +34,12 @@ class Persons_Finance:
         self.necessities_rate = necessities_rate # percentage of how much one uses on fixed bills
         self.wants_rate = wants_rate # percentage of how much one uses on wants
 
+        # Dictionaries with information
         self.necessities = necessities
         self.housing = housing
         self.student_loan = student_loan
         self.other_debt = other_debt
+        self.tax_info = tax_info
 
 
     def living_expenses(self):
@@ -59,6 +61,11 @@ class Persons_Finance:
         months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
         'September', 'October', 'November', 'December']
 
+        n_months = {'1': 12, '2': 11, '3': 10, '4': 9, '5': 8, '6': 7, '7': 6, '8': 5,
+        '9': 4, '10': 3, '11': 2, '12': 1}
+
+        time_factor = (n_months[str(month)]/12)
+
         df_Actual = {}
         df_Expected = {} # Approximately following the 50/30/20 budgetting way 
 
@@ -69,7 +76,23 @@ class Persons_Finance:
         
         tax_df = self.tax_calculator(house_df, student_debt_df, other_debt_df)
 
-        print(self.tr)
+        tax_df['Tax %'] = [self.tr]*len(tax_df)
+
+        summary_dict = {
+            'Month': [months[month-1]],
+            'Year': [tax_df['Year'][0]],
+            'Gross Salary': [self.salary],
+            'Bonus': [self.bonus],
+            'Total Tax': [tax_df['Total Tax'][1]],
+            'Tax %': [round(tax_df['Tax %'][0]*100)],
+            'Netto Salary': [self.salary* (1-self.tr)],
+            'Taxes Already Payed': [tax_df['Total Tax'][1]*time_factor],
+            'Vacation Money': [self.salary*0.12],
+        }
+
+        summary_df = pd.DataFrame(summary_dict)
+        # Set the 'Name' column as the index
+        summary_df = summary_df.set_index('Month')
 
         self.netto = self.salary*(1-self.tr) # yearly income after tax
         self.tax = self.salary*self.tr # yearly amount which is paid to taxes
@@ -102,7 +125,7 @@ class Persons_Finance:
 
         diff = df_Expected['Expected Living Cost'] - df_Actual['Actual Living Cost'] # Calculating the difference in budgeted and actual costs
         if diff > 0:
-            df_Actual['Savings'] = df_Actual['Savings'] + diff
+            df_Actual['Student Loan'] = df_Actual['Student Loan'] + diff
             df_Actual['Actual Living Cost'] = df_Actual['Actual Living Cost'] + diff
         else:
             df_Actual['Savings'] = df_Actual['Savings'] - diff
@@ -114,6 +137,8 @@ class Persons_Finance:
         df_Actual.set_index('Monthly Expenses', inplace=True)
         df_Expected.set_index('Monthly Budget', inplace=True)
 
+
+        print(tabulate(summary_df, headers='keys', tablefmt='fancy_grid'))
 
         print(tabulate(df_Expected, headers='keys', tablefmt='fancy_grid'))
         print(tabulate(df_Actual, headers='keys', tablefmt='fancy_grid'))
@@ -253,7 +278,7 @@ class Persons_Finance:
 
         # checking the element is < 0 
         df[df < 0] = 0
-        df.loc[(df['Yearly Interest'] == 0), ['Monthly Payment', 'Yearly Deductions', 'Yearly Term']] = 0
+        df.loc[(df['Residual Loan of ' + loan_name] == 0), ['Monthly Payment', 'Yearly Deductions', 'Yearly Interest', 'Yearly Term']] = 0
 
         df.loc['Total']= df.sum() #add total row
         #set last value in team column to be blank
@@ -318,6 +343,13 @@ class Persons_Finance:
     
     def tax_calculator(self, df1, df2, df3):
 
+        # Finding the time now, so the calculation can be adjusted to suit the time
+        dt = datetime.datetime.today()
+        month = dt.month
+        months = {'1': 12, '2': 11, '3': 10, '4': 9, '5': 8, '6': 7, '7': 6, '8': 5,
+        '9': 4, '10': 3, '11': 2, '12': 1}
+        time_factor = (months[str(month)]/12)
+
         a = list(df1['Yearly Interest'])[:-1]
         b = list(df2['Yearly Interest'])[:-1]
         c = list(df3['Yearly Interest'])[:-1]
@@ -338,15 +370,15 @@ class Persons_Finance:
         max_len -= 1 # To make sure the length of arrays stay same length
 
         # Deductions
-        minimun_deduction = [104450]*max_len
-        person_deduction = [88250]*max_len
+        minimun_deduction = [self.tax_info['min_deduction']]*max_len
+        person_deduction = [self.tax_info['personal_deduction']]*max_len
 
-        # Taxes
-        social_security_tax = 0.082 # Off the gross inncome
-        state_tax = 0.23 # On the income after all deductions have been deducted
-        stage1_tax = 0.017 # For income between 200k - 300k
-        stage2_tax = 0.04 # For income between 300k - 670k
-        stage3_tax = 0.136 # For income between 670k - 940k
+        # Taxes in percentage
+        social_security_tax = self.tax_info['social_security_tax'] # Off the gross inncome
+        state_tax = self.tax_info['state_tax'] # On the income after all deductions have been deducted
+        stage1_tax = self.tax_info['stage_tax'][0] # For income between 200k - 300k
+        stage2_tax = self.tax_info['stage_tax'][1] # For income between 300k - 670k
+        stage3_tax = self.tax_info['stage_tax'][2] # For income between 670k - 940k
         
         # Make the column names
         years = self.year + np.arange(0, max_len)
@@ -377,6 +409,8 @@ class Persons_Finance:
             tax_df['Stage Tax'] = np.array([8.5E4*stage1_tax]*max_len) + np.array([3.77E5*stage2_tax]*max_len) + np.array([(self.gross-6.7E5)*stage3_tax]*max_len)
 
         tax_df['Total Tax'] = tax_df['Social Security Tax'] + tax_df['State Tax'] + tax_df['Stage Tax']
+
+        tax_df['Netto Salary'] = tax_df['Gross Salary'] - tax_df['Total Tax']
 
         self.tr = tax_df['Total Tax'].values[1]/self.gross
 
