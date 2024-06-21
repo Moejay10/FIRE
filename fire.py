@@ -16,10 +16,11 @@ class Persons_Finance:
             bonus_income=1.5E5,
             saved=1.3E6, 
             necessities_rate=0.52, wants_rate=0.1, savings_rate=0.38, 
+            invest_info={'Interest': 0.08, 'Years': 20, 'Goal': 1.5E7, 'Invest': 0},
             tax_info={'min_deduction': 104450, 'personal_deduction': 88250, 'social_security_tax': 0.082, 'state_tax': 0.23, 'stage_tax': [0.017, 0.04, 0.136]},
             necessities={'Food': 3E3, 'Other': 4.5E3},
-            housing={'Loan': 1.75E6, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 20, 'Interest': 0.0565, 'Serial Loan': False, 'Shared Costs': 4E3, 'Rent': 9E3, 'Extra contributions': 1E3},
-            student_loan={'Loan': 4.48E5, 'Start Time': datetime.datetime.strptime('15/06/2024', '%d/%m/%Y').date(), 'Years': 19, 'Interest': 0.054, 'Serial Loan': False, 'Extra contributions': 1E3},
+            housing={'Loan': 1.75E6, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 20, 'Interest': 0.0565, 'Serial Loan': False, 'Shared Costs': 4E3, 'Rent': 9E3, 'Extra contributions': 0},
+            student_loan={'Loan': 4.49E5, 'Start Time': datetime.datetime.strptime('15/06/2024', '%d/%m/%Y').date(), 'Years': 12, 'Interest': 0.0543, 'Serial Loan': False, 'Extra contributions': 0},
             other_debt={'Loan': 7.7E5, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 12, 'Interest': 0.031, 'Serial Loan': False, 'Extra contributions': 0}
             ):
         self.name = name
@@ -40,7 +41,33 @@ class Persons_Finance:
         self.student_loan = student_loan
         self.other_debt = other_debt
         self.tax_info = tax_info
+        self.invest_info = invest_info
 
+
+    def add_columns(self, df_list, column_names):
+        a = list(df_list[0][column_names[0]])[:-1]
+        b = list(df_list[1][column_names[1]])[:-1]
+        c = list(df_list[2][column_names[2]])[:-1]
+        
+        l1, l2, l3 = len(a), len(b), len(c)
+        # now find the max
+        max_len = max(l1, l2, l3)
+
+        # Resize all according to the determined max length
+        if not max_len == l1:
+            a.extend([0]*(max_len - l1))
+        if not max_len == l2:
+            b.extend([0]*(max_len - l2))
+        if not max_len == l3:
+            c.extend([0]*(max_len - l3))
+        
+        total_df = pd.DataFrame(
+            {
+            'Total Debt': np.array(a) + np.array(b) + np.array(c)
+            }
+        )
+
+        return total_df
 
     def living_expenses(self):
         """Calculates the monthly living expenses which goes to essential needs, 
@@ -88,6 +115,7 @@ class Persons_Finance:
             'Netto Salary': [self.salary* (1-self.tr)],
             'Taxes Already Payed': [tax_df['Total Tax'][1]*time_factor],
             'Vacation Money': [self.salary*0.12],
+            'Total Debt': list(house_df['Residual Loan of Housing'])[0] + list(student_debt_df['Residual Loan of Student Loan'])[0] + list(other_debt_df['Residual Loan of Shared Loan'])[0]
         }
 
         summary_df = pd.DataFrame(summary_dict)
@@ -98,7 +126,19 @@ class Persons_Finance:
         self.tax = self.salary*self.tr # yearly amount which is paid to taxes
         self.mi = (self.netto/12) # monthly income after tax 
         self.invest = self.savings_rate*self.mi # amount to invest each month
-        
+
+        invest_df = self.compound_Interest(self.invest_info['Interest'], self.invest_info['Years'], self.invest_info['Goal'], self.invest_info['Invest'])
+        invest_df.rename(columns = {'Total':'Total Invested'}, inplace = True)
+        total_debt = self.add_columns([house_df, student_debt_df, other_debt_df], ['Residual Loan of Housing', 'Residual Loan of Student Loan', 'Residual Loan of Shared Loan'])
+
+        assets_df = self.net_Worth(total_debt, invest_df)
+
+        tax_df['Asset Tax'] = assets_df['Asset Tax']
+
+        summary_df['Total Assets'] = assets_df['Total Assets'][0]
+        summary_df['Total Tax'] += assets_df['Asset Tax'][0]
+
+
         df_Expected['Job Income'] = self.mi
         df_Expected['Rent Income'] = self.housing['Rent']
         df_Expected['Necessities'] = self.mi*self.necessities_rate + self.housing['Rent']
@@ -128,8 +168,8 @@ class Persons_Finance:
             df_Actual['Student Loan'] = df_Actual['Student Loan'] + diff
             df_Actual['Actual Living Cost'] = df_Actual['Actual Living Cost'] + diff
         else:
-            df_Actual['Savings'] = df_Actual['Savings'] - diff
-            df_Actual['Actual Living Cost'] = df_Actual['Actual Living Cost'] - diff
+            df_Actual['Savings'] = df_Actual['Savings'] - abs(diff)
+            df_Actual['Actual Living Cost'] = df_Actual['Actual Living Cost'] - abs(diff)
 
         df_Expected = pd.DataFrame(df_Expected)
         df_Actual = pd.DataFrame(df_Actual)
@@ -340,6 +380,8 @@ class Persons_Finance:
         plt.title("Financial Independence Retire Early")
         plt.savefig('FIRE.png')
 
+        return df
+
     
     def tax_calculator(self, df1, df2, df3):
 
@@ -418,8 +460,43 @@ class Persons_Finance:
 
     
     
-    def net_Worth(self):
-        pass
+    def net_Worth(self, total_debt, investment):
+        time_frame = len(total_debt)
+        house_asset = self.primary_residence(time_frame)
+        total_assets = pd.DataFrame()
+
+        total_assets['Total Assets'] = np.array(list(investment['Total Invested'])) + np.array(list(house_asset['Primary Residence Asset'])) - np.array(list(total_debt['Total Debt']))
+        assets_tax = []
+        asset_tax_limit = 1.7E6
+        for asset in total_assets['Total Assets']:
+            if asset > 0 and asset > asset_tax_limit:
+                assets_tax.append(asset*0.01)
+            else:
+                assets_tax.append(0)
+        
+        total_assets['Asset Tax'] = assets_tax
+
+        return total_assets
+
+        
+        print(total_assets)
+    
+    def primary_residence(self, time_frame):
+        house_asset = [0] * time_frame
+        house_asset[0] = (self.housing['Loan'] + self.other_debt['Loan']) * 0.25 # Primary residence is only 25% asset of the total value
+        house_prices_increase = 0.01 # An educated guess
+        for i in range(1, time_frame):
+            house_asset[i] = house_asset[i-1] * (1 + house_prices_increase)
+        
+        house_asset_df = pd.DataFrame(
+            {
+                'Primary Residence Asset': house_asset
+            }
+        )
+        return house_asset_df
+
+
+        
 
 
 if __name__ == '__main__':
@@ -433,4 +510,4 @@ if __name__ == '__main__':
     #life.calculate_Loan(Loan=4.53E5, Years=20, interest_rate=0.048, loan_name='Student Loan', serial_loan=False, extra_contributions=0)
     #life.calculate_Loan(Loan=7.75E5, Years=16, interest_rate=0.035, loan_name='Neighbourhood Debt', serial_loan=True, extra_contributions=0)
 
-    life.compound_Interest(Interest=0.1, Years=25, Goal=1E7, Invest=0)
+    #life.compound_Interest(Interest=0.08, Years=20, Goal=1.5E7, Invest=0)
