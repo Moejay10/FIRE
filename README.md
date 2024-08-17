@@ -1,7 +1,7 @@
 # FIRE
-## Financial Independent Retire Early
+## Financial Independence Retire Early
 
-###  What Is Financial Independence, Retire Early (FIRE)?
+###  What Is Financial Independence Retire Early (FIRE)?
 Financial Independence, Retire Early (FIRE) is a movement of people devoted to a program of extreme savings and investment that aims to allow them to retire far earlier than traditional budgets and retirement plans would permit.
 
 #### Key Takeaways
