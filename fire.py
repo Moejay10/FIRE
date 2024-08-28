@@ -13,10 +13,10 @@ class Persons_Finance:
             name="Mohamed Ismail", 
             birth_year=1996, 
             salary_income=6.5E5,
-            bonus_income=1.5E5,
+            bonus_income=0.5E5,
             saved=1.3E6, 
             necessities_rate=0.52, wants_rate=0.1, savings_rate=0.38, 
-            invest_info={'Interest': 0.08, 'Years': 20, 'Goal': 1.5E7, 'Invest': 0},
+            invest_info={'Interest': 0.09, 'Years': 20, 'Goal': 1.5E7, 'Invest': 0},
             tax_info={'min_deduction': 104450, 'personal_deduction': 88250, 'social_security_tax': 0.082, 'state_tax': 0.23, 'stage_tax': [0.017, 0.04, 0.136]},
             necessities={'Food': 3E3, 'Other': 4.5E3},
             housing={'Loan': 1.75E6, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 20, 'Interest': 0.0565, 'Serial Loan': False, 'Shared Costs': 4E3, 'Rent': 9E3, 'Extra contributions': 0},
@@ -165,7 +165,7 @@ class Persons_Finance:
 
         diff = df_Expected['Expected Living Cost'] - df_Actual['Actual Living Cost'] # Calculating the difference in budgeted and actual costs
         if diff > 0:
-            df_Actual['Student Loan'] = df_Actual['Student Loan'] + diff
+            df_Actual['Savings'] = df_Actual['Savings'] + diff
             df_Actual['Actual Living Cost'] = df_Actual['Actual Living Cost'] + diff
         else:
             df_Actual['Savings'] = df_Actual['Savings'] - abs(diff)
@@ -355,7 +355,7 @@ class Persons_Finance:
         F['Interest'] = [0]
     
         for y in range(1, len(years)):
-            cont = Contributions*12
+            cont = Contributions*12 # Contributions for the year multiplied with a 5% increase every year
             gain = F['Total'][y-1]*(1+r) - F['Contributed'][y-1]  
             total = F['Total'][y-1]*(1+r) + cont
             
@@ -377,7 +377,8 @@ class Persons_Finance:
         plt.legend(['Total', 'Contributed', 'Interest', 'Goal'])
         plt.xlabel("Year")
         plt.ylabel("Money (kr)")
-        plt.title("Financial Independence Retire Early")
+        plt.title("Financial Independence Retire Early") 
+        #plt.show()
         plt.savefig('FIRE.png')
 
         return df
