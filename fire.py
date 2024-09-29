@@ -16,10 +16,10 @@ class Persons_Finance:
             bonus_income=3.5E4,
             saved=1.4E6, 
             necessities_rate=0.50, wants_rate=0.10, savings_rate=0.40, 
-            invest_info={'Interest': 0.08, 'Years': 20, 'Goal': 1.5E7, 'Invest': 0},
+            invest_info={'Interest': 0.08, 'Years': 30, 'Goal': 1.5E7, 'Invest': 0},
             tax_info={'min_deduction': 104450, 'personal_deduction': 88250, 'social_security_tax': 0.082, 'state_tax': 0.23, 'stage_tax': [0.017, 0.04, 0.136]},
             necessities={'Food': 3E3, 'Other': 4.5E3},
-            housing={'Loan': 1.75E6, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 20, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 4E3, 'Rent': 9E3, 'Extra contributions': 0},
+            housing={'Loan': 3.4E6, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 30, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 5E3, 'Rent': 1.3E4, 'Extra contributions': 4E3},
             student_loan={'Loan': 4.49E5, 'Start Time': datetime.datetime.strptime('15/06/2024', '%d/%m/%Y').date(), 'Years': 12, 'Interest': 0.0543, 'Serial Loan': False, 'Extra contributions': 0},
             other_debt={'Loan': 7.7E5, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 12, 'Interest': 0.031, 'Serial Loan': False, 'Extra contributions': 0}
             ):
@@ -231,6 +231,7 @@ class Persons_Finance:
         F['Interest'] = [Start*interest_rate*time_factor]
         F['Term Amount'] = [(Start/(Years)) + Start*interest_rate*time_factor]
         F['Monthly Payment'] = [(Start/(Years) + Start*interest_rate)/12]
+        F['Extra Contributions'] = [extra_contributions]*len(years)
 
         F['Residual Loan of ' + loan_name] = [Start - F['Deductions'][0] - extra_contributions*12*time_factor]
 
@@ -271,6 +272,7 @@ class Persons_Finance:
         F['Age'] = years 
         # Calculating the first terms
         F['Monthly Payment'] = [Start*((monthly_interest)/(1-(1+monthly_interest)**(-Terms)))] * len(years)
+        F['Extra Contributions'] = [extra_contributions]*len(years)
         F['Interest'] = [Start*interest_rate*time_factor]
         F['Term Amount'] = [F['Monthly Payment'][0]*12] * len(years)
         F['Term Amount'][0] = F['Term Amount'][0]*time_factor
@@ -313,12 +315,12 @@ class Persons_Finance:
         df = pd.DataFrame(F)
 
         df.set_index('Year', inplace=True)
-        df = df[['Age', 'Monthly Payment', 'Deductions', 'Interest', 'Term Amount', 'Residual Loan of ' + loan_name]]
-        df.rename(columns = {'Deductions': 'Yearly Deductions', 'Interest': 'Yearly Interest', 'Term Amount': 'Yearly Term'}, inplace=True)
+        df = df[['Age', 'Monthly Payment', 'Extra Contributions', 'Deductions', 'Interest', 'Term Amount', 'Residual Loan of ' + loan_name]]
+        df.rename(columns = {'Extra Contributions': 'Extra Monthly Contributions', 'Deductions': 'Yearly Deductions', 'Interest': 'Yearly Interest', 'Term Amount': 'Yearly Term'}, inplace=True)
 
         # checking the element is < 0 
         df[df < 0] = 0
-        df.loc[(df['Residual Loan of ' + loan_name] == 0), ['Monthly Payment', 'Yearly Deductions', 'Yearly Interest', 'Yearly Term']] = 0
+        df.loc[(df['Residual Loan of ' + loan_name] == 0), ['Monthly Payment', 'Extra Monthly Contributions', 'Yearly Deductions', 'Yearly Interest', 'Yearly Term']] = 0
 
         df.loc['Total']= df.sum() #add total row
         #set last value in team column to be blank
