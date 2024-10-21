@@ -13,13 +13,13 @@ class Persons_Finance:
             name="Mohamed Ismail", 
             birth_year=1996, 
             salary_income=6.5E5,
-            bonus_income=0,
-            saved=1.5E6, 
+            bonus_income=2.1E5,
+            saved=1.6E6, 
             necessities_rate=0.50, wants_rate=0.10, savings_rate=0.40, 
             invest_info={'Interest': 0.08, 'Years': 20, 'Goal': 1.5E7, 'Invest': 0},
             tax_info={'min_deduction': 104450, 'personal_deduction': 88250, 'social_security_tax': 0.082, 'state_tax': 0.23, 'stage_tax': [0.017, 0.04, 0.136]},
             necessities={'Food': 3E3, 'Other': 4.5E3},
-            housing={'Loan': 3.4E6, 'Start Time': datetime.datetime.strptime('15/09/2024', '%d/%m/%Y').date(), 'Years': 30, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 5E3, 'Rent': 1.2E4, 'Extra contributions': 2E3},
+            housing={'Loan': 1.7E6, 'Start Time': datetime.datetime.strptime('15/09/2024', '%d/%m/%Y').date(), 'Years': 19, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 4E3, 'Rent': 9.5E3, 'Extra contributions': 0},
             student_loan={'Loan': 4.49E5, 'Start Time': datetime.datetime.strptime('15/06/2024', '%d/%m/%Y').date(), 'Years': 12, 'Interest': 0.0543, 'Serial Loan': False, 'Extra contributions': 0},
             other_debt={'Loan': 7.7E5, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 12, 'Interest': 0.031, 'Serial Loan': False, 'Extra contributions': 0}
             ):
