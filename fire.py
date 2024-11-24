@@ -12,14 +12,14 @@ class Persons_Finance:
     def __init__(self, 
             name="Mohamed Ismail", 
             birth_year=1996, 
-            salary_income=6.5E5,
-            bonus_income=2.1E5,
+            salary_income=7.5E5,
+            bonus_income=0E5,
             saved=1.6E6, 
             necessities_rate=0.50, wants_rate=0.10, savings_rate=0.40, 
             invest_info={'Interest': 0.08, 'Years': 20, 'Goal': 1.5E7, 'Invest': 0},
             tax_info={'min_deduction': 104450, 'personal_deduction': 88250, 'social_security_tax': 0.082, 'state_tax': 0.23, 'stage_tax': [0.017, 0.04, 0.136]},
             necessities={'Food': 3E3, 'Other': 4.5E3},
-            housing={'Loan': 1.7E6, 'Start Time': datetime.datetime.strptime('15/09/2024', '%d/%m/%Y').date(), 'Years': 19, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 4E3, 'Rent': 9.5E3, 'Extra contributions': 0},
+            housing={'Loan': 3.4E6, 'Start Time': datetime.datetime.strptime('15/09/2024', '%d/%m/%Y').date(), 'Years': 30, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 4E3, 'Rent': 10E3, 'Extra contributions': 0},
             student_loan={'Loan': 4.49E5, 'Start Time': datetime.datetime.strptime('15/06/2024', '%d/%m/%Y').date(), 'Years': 12, 'Interest': 0.0543, 'Serial Loan': False, 'Extra contributions': 0},
             other_debt={'Loan': 7.7E5, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 12, 'Interest': 0.031, 'Serial Loan': False, 'Extra contributions': 0}
             ):
@@ -127,7 +127,8 @@ class Persons_Finance:
         self.tax = self.salary*self.tr # yearly amount which is paid to taxes
         self.mi = (self.netto/12) # monthly income after tax 
         self.invest = self.savings_rate*self.mi # amount to invest each month
-
+        
+        """
         invest_df = self.compound_Interest(self.invest_info['Interest'], self.invest_info['Years'], self.invest_info['Goal'], self.invest_info['Invest'])
         invest_df.rename(columns = {'Total':'Total Invested'}, inplace = True)
         total_debt = self.add_columns([house_df, student_debt_df, other_debt_df], ['Residual Loan of Housing', 'Residual Loan of Student Loan', 'Residual Loan of Shared Loan'])
@@ -138,7 +139,7 @@ class Persons_Finance:
 
         summary_df['Total Assets'] = assets_df['Total Assets'][0]
         summary_df['Total Tax'] += assets_df['Asset Tax'][0]
-
+        """
 
         df_Expected['Job Income'] = self.mi
         df_Expected['Rent Income'] = self.housing['Rent']
@@ -167,14 +168,28 @@ class Persons_Finance:
         diff = df_Expected['Expected Living Cost'] - df_Actual['Actual Living Cost'] # Calculating the difference in budgeted and actual costs
         if diff > 0:
             df_Actual['Savings'] = df_Actual['Savings'] + diff
+            self.invest += diff 
             df_Actual['Actual Living Cost'] = df_Actual['Actual Living Cost'] + diff
         else:
             df_Actual['Savings'] = df_Actual['Savings'] - abs(diff)
+            self.invest -= abs(diff)
             df_Actual['Actual Living Cost'] = df_Actual['Actual Living Cost'] - abs(diff)
 
         df_Expected = pd.DataFrame(df_Expected)
         df_Actual = pd.DataFrame(df_Actual)
         
+        invest_df = self.compound_Interest(self.invest_info['Interest'], self.invest_info['Years'], self.invest_info['Goal'], self.invest_info['Invest'])
+        invest_df.rename(columns = {'Total':'Total Invested'}, inplace = True)
+        total_debt = self.add_columns([house_df, student_debt_df, other_debt_df], ['Residual Loan of Housing', 'Residual Loan of Student Loan', 'Residual Loan of Shared Loan'])
+
+        assets_df = self.net_Worth(total_debt, invest_df)
+
+        tax_df['Asset Tax'] = assets_df['Asset Tax']
+
+        summary_df['Total Assets'] = assets_df['Total Assets'][0]
+        summary_df['Total Tax'] += assets_df['Asset Tax'][0]
+
+
         df_Actual.set_index('Monthly Expenses', inplace=True)
         df_Expected.set_index('Monthly Budget', inplace=True)
 
@@ -187,6 +202,8 @@ class Persons_Finance:
         print(tabulate(house_df, headers='keys', tablefmt='fancy_grid'))
         print(tabulate(student_debt_df, headers='keys', tablefmt='fancy_grid'))
         print(tabulate(other_debt_df, headers='keys', tablefmt='fancy_grid'))
+        
+        print(tabulate(invest_df, headers='keys', tablefmt='fancy_grid'))
 
         # Create a Pandas Excel writer using XlsxWriter as the engine.
         writer = pd.ExcelWriter("Personal_Finances.xlsx", engine="xlsxwriter")
@@ -504,14 +521,30 @@ class Persons_Finance:
 
 
 if __name__ == '__main__':
-    life = Persons_Finance()
-    life.living_expenses()
+    
+    ch = 0
+    while (ch != 3):
+        print("--[ FIRE ]--")
+        print("Vennligst velg et alternativ:\n 1. Skriv ut forhånds inputted økonomi detaljer\n 2. Legg inn nye økonomi detaljer\n 3. Avslutt")
+        ch = int(input("Valg: "))
 
+        if (ch == 1):
+            life = Persons_Finance()
+            life.living_expenses()
+    
+        elif (ch == 2):
+            print("\n--[LEGG INN NY DATA]--")
+            salary_income = float(input("Lønn: "))
+            bonus_income = float(input("Bonus: "))
+            saved = float(input("Spart: "))
+            housing_loan = float(input("Boliglån: "))
+            housing_interest = float(input("Boliglånsrente i %: "))/100
+            housing_years = int(input("Boliglån Lengde: "))
+            housing_shared_costs = float(input("Felleskostnader: "))
+            housing_rent = float(input("Leie: "))
+            
+            housing={'Loan': housing_loan, 'Start Time': datetime.datetime.strptime('15/09/2024', '%d/%m/%Y').date(), 'Years': housing_years, 'Interest': housing_interest, 'Serial Loan': False, 'Shared Costs': housing_shared_costs, 'Rent': housing_rent, 'Extra contributions': 0}
+            
+            life = Persons_Finance(salary_income=salary_income, bonus_income=bonus_income, saved=saved, housing=housing)
+            life.living_expenses()
 
-    #life.calculate_Loan(Loan=1.75E6, Years=20, interest_rate=0.0539, loan_name='Mortgage', serial_loan=False, extra_contributions=0)
-    #life.calculate_Loan(Loan=1.77E6, Years=25, interest_rate=0.0539, loan_name='Mortgage', serial_loan=True, extra_contributions=0)
-
-    #life.calculate_Loan(Loan=4.53E5, Years=20, interest_rate=0.048, loan_name='Student Loan', serial_loan=False, extra_contributions=0)
-    #life.calculate_Loan(Loan=7.75E5, Years=16, interest_rate=0.035, loan_name='Neighbourhood Debt', serial_loan=True, extra_contributions=0)
-
-    #life.compound_Interest(Interest=0.08, Years=20, Goal=1.5E7, Invest=0)
