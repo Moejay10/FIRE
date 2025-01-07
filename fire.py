@@ -12,14 +12,14 @@ class Persons_Finance:
     def __init__(self, 
             name="Mohamed Ismail", 
             birth_year=1996, 
-            salary_income=7.5E5,
-            bonus_income=0E5,
-            saved=1.6E6, 
+            salary_income=6.5E5,
+            bonus_income=4.0E4,
+            saved=1.7E6, 
             necessities_rate=0.50, wants_rate=0.10, savings_rate=0.40, 
             invest_info={'Interest': 0.08, 'Years': 20, 'Goal': 1.5E7, 'Invest': 0},
             tax_info={'min_deduction': 104450, 'personal_deduction': 88250, 'social_security_tax': 0.082, 'state_tax': 0.23, 'stage_tax': [0.017, 0.04, 0.136]},
-            necessities={'Food': 3E3, 'Other': 4.5E3},
-            housing={'Loan': 3.4E6, 'Start Time': datetime.datetime.strptime('15/09/2024', '%d/%m/%Y').date(), 'Years': 30, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 4E3, 'Rent': 10E3, 'Extra contributions': 0},
+            necessities={'Food': 4E3, 'Other': 5.0E3},
+            housing={'Loan': 1.7E6, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 19, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 4E3, 'Rent': 9.5E3, 'Extra contributions': 0},
             student_loan={'Loan': 4.49E5, 'Start Time': datetime.datetime.strptime('15/06/2024', '%d/%m/%Y').date(), 'Years': 12, 'Interest': 0.0543, 'Serial Loan': False, 'Extra contributions': 0},
             other_debt={'Loan': 7.7E5, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 12, 'Interest': 0.031, 'Serial Loan': False, 'Extra contributions': 0}
             ):
@@ -42,7 +42,6 @@ class Persons_Finance:
         self.other_debt = other_debt
         self.tax_info = tax_info
         self.invest_info = invest_info
-        self.invest_info['Years'] = self.housing['Years'] # Must be same due to calculate the asset dataframe
 
 
     def add_columns(self, df_list, column_names):
@@ -128,19 +127,6 @@ class Persons_Finance:
         self.mi = (self.netto/12) # monthly income after tax 
         self.invest = self.savings_rate*self.mi # amount to invest each month
         
-        """
-        invest_df = self.compound_Interest(self.invest_info['Interest'], self.invest_info['Years'], self.invest_info['Goal'], self.invest_info['Invest'])
-        invest_df.rename(columns = {'Total':'Total Invested'}, inplace = True)
-        total_debt = self.add_columns([house_df, student_debt_df, other_debt_df], ['Residual Loan of Housing', 'Residual Loan of Student Loan', 'Residual Loan of Shared Loan'])
-
-        assets_df = self.net_Worth(total_debt, invest_df)
-
-        tax_df['Asset Tax'] = assets_df['Asset Tax']
-
-        summary_df['Total Assets'] = assets_df['Total Assets'][0]
-        summary_df['Total Tax'] += assets_df['Asset Tax'][0]
-        """
-
         df_Expected['Job Income'] = self.mi
         df_Expected['Rent Income'] = self.housing['Rent']
         df_Expected['Necessities'] = self.mi*self.necessities_rate + self.housing['Rent']
@@ -485,8 +471,18 @@ class Persons_Finance:
         time_frame = len(total_debt)
         house_asset = self.primary_residence(time_frame)
         total_assets = pd.DataFrame()
+        
+        print("Total Invested", np.array((investment)))
+        print("House Asset", np.array((house_asset)))
+        print("Total Debt", np.array((total_debt)))
 
-        total_assets['Total Assets'] = np.array(list(investment['Total Invested'])) + np.array(list(house_asset['Primary Residence Asset'])) - np.array(list(total_debt['Total Debt']))
+        min_time = 0
+        if len(investment['Total Invested']) <= time_frame:
+            min_time = len(investment['Total Invested'])
+        else:
+            min_time = time_frame
+
+        total_assets['Total Assets'] = np.array(list(investment['Total Invested'])[0:min_time]) + np.array(list(house_asset['Primary Residence Asset'])[0:min_time]) - np.array(list(total_debt['Total Debt'])[0:min_time])
         assets_tax = []
         asset_tax_limit = 1.7E6
         for asset in total_assets['Total Assets']:
@@ -496,6 +492,8 @@ class Persons_Finance:
                 assets_tax.append(0)
         
         total_assets['Asset Tax'] = assets_tax
+        print("Total Assets", total_assets)
+        print("Asset Tax", assets_tax)
 
         return total_assets
 
@@ -537,14 +535,58 @@ if __name__ == '__main__':
             salary_income = float(input("Lønn: "))
             bonus_income = float(input("Bonus: "))
             saved = float(input("Spart: "))
-            housing_loan = float(input("Boliglån: "))
-            housing_interest = float(input("Boliglånsrente i %: "))/100
-            housing_years = int(input("Boliglån Lengde: "))
-            housing_shared_costs = float(input("Felleskostnader: "))
-            housing_rent = float(input("Leie: "))
             
-            housing={'Loan': housing_loan, 'Start Time': datetime.datetime.strptime('15/09/2024', '%d/%m/%Y').date(), 'Years': housing_years, 'Interest': housing_interest, 'Serial Loan': False, 'Shared Costs': housing_shared_costs, 'Rent': housing_rent, 'Extra contributions': 0}
+            # Boliglån
+            have_housing_loan = str(input("\nHar du boliglån (Ja/Nei): "))
+            if have_housing_loan == "Ja":
+                housing_loan = float(input("Boliglån: "))
+                housing_interest = float(input("Boliglånsrente i %: "))/100
+                housing_years = int(input("Boliglån Lengde i år: "))
+                housing_shared_costs = float(input("Felleskostnader: "))
+                housing_rent = float(input("Leieinntekter: "))
+                housing_extra_contributions = int(input("Ekstra månedlige betalinger: "))
+            else:
+                housing_loan = 0
+                housing_years = 2
+                housing_interest = 0.056
+                housing_shared_costs = 0
+                housing_rent = 0
+                housing_extra_contributions = 0
             
-            life = Persons_Finance(salary_income=salary_income, bonus_income=bonus_income, saved=saved, housing=housing)
+            housing={'Loan': housing_loan, 'Start Time': datetime.date.today(), 'Years': housing_years, 'Interest': housing_interest, 'Serial Loan': False, 'Shared Costs': housing_shared_costs, 'Rent': housing_rent, 'Extra contributions': housing_extra_contributions}
+ 
+            # Student lån
+            have_student_loan = str(input("\nHar du student lån (Ja/Nei): "))
+            if have_student_loan == "Ja":
+                student_loan = float(input("Studentlån: "))
+                student_interest = float(input("Lånets rente i %: "))/100
+                student_years = int(input("Lånets Lengde i år: "))
+                student_extra_contributions = int(input("Ekstra månedlige betalinger: "))
+            else:
+                student_loan = 0
+                student_years = 2
+                student_interest = 0.0543
+                student_extra_contributions = 0
+            
+            student={'Loan': student_loan, 'Start Time': datetime.date.today(), 'Years': student_years, 'Interest': student_interest, 'Serial Loan': False, 'Extra contributions': student_extra_contributions}
+            
+            # Annet lån
+            have_other_loan = str(input("\nHar du annet lån (Ja/Nei): "))
+            if have_other_loan == "Ja":
+                other_loan = float(input("Annet Lån: "))
+                other_interest = float(input("Lånets rente i %: "))/100
+                other_years = int(input("Lånets Lengde i år: "))
+                other_extra_contributions = int(input("Ekstra månedlige betalinger: "))
+            else:
+                other_loan = 0
+                other_years = 2
+                other_interest = 0.031
+                other_extra_contributions = 0
+
+        
+            other={'Loan': other_loan, 'Start Time': datetime.date.today(), 'Years': other_years, 'Interest': other_interest, 'Serial Loan': False, 'Extra contributions': other_extra_contributions}
+            
+            
+            life = Persons_Finance(salary_income=salary_income, bonus_income=bonus_income, saved=saved, housing=housing, student_loan=student, other_debt=other)
             life.living_expenses()
 
