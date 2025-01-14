@@ -472,10 +472,6 @@ class Persons_Finance:
         house_asset = self.primary_residence(time_frame)
         total_assets = pd.DataFrame()
         
-        print("Total Invested", np.array((investment)))
-        print("House Asset", np.array((house_asset)))
-        print("Total Debt", np.array((total_debt)))
-
         min_time = 0
         if len(investment['Total Invested']) <= time_frame:
             min_time = len(investment['Total Invested'])
@@ -492,13 +488,9 @@ class Persons_Finance:
                 assets_tax.append(0)
         
         total_assets['Asset Tax'] = assets_tax
-        print("Total Assets", total_assets)
-        print("Asset Tax", assets_tax)
 
         return total_assets
 
-        
-        print(total_assets)
     
     def primary_residence(self, time_frame):
         house_asset = [0] * time_frame
