@@ -16,12 +16,12 @@ class Persons_Finance:
             bonus_income=0,
             saved=3.0E6, 
             necessities_rate=0.50, wants_rate=0.10, savings_rate=0.40, 
-            invest_info={'Interest': 0.08, 'Years': 20, 'Goal': 1.5E7, 'Invest': 0},
+            invest_info={'Interest': 0.08, 'Years': 15, 'Goal': 1.5E7, 'Invest': 0},
             tax_info={'min_deduction': 104450, 'personal_deduction': 88250, 'social_security_tax': 0.082, 'state_tax': 0.23, 'stage_tax': [0.017, 0.04, 0.136]},
             necessities={'Food': 4E3, 'Other': 4E3},
-            housing={'Loan': 2.315E6, 'Start Time': datetime.datetime.strptime('15/02/2025', '%d/%m/%Y').date(), 'Years': 30, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 5E3, 'Rent': 9.4E3, 'Extra contributions': 0},
-            student_loan={'Loan': 7.5E5, 'Start Time': datetime.datetime.strptime('15/02/2025', '%d/%m/%Y').date(), 'Years': 20, 'Interest': 0.0535, 'Serial Loan': False, 'Extra contributions': 0},
-            other_debt={'Loan': 7.7E5, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 12, 'Interest': 0.031, 'Serial Loan': False, 'Extra contributions': 0}
+            housing={'Loan': 3.6E6, 'Start Time': datetime.datetime.strptime('15/08/2025', '%d/%m/%Y').date(), 'Years': 30, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 7E3, 'Rent': 6.5E3, 'Extra contributions': 0},
+            student_loan={'Loan': 6.0E5, 'Start Time': datetime.datetime.strptime('15/06/2026', '%d/%m/%Y').date(), 'Years': 20, 'Interest': 0.0535, 'Serial Loan': False, 'Extra contributions': 1.0E3},
+            other_debt={'Loan': 0E5, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 2, 'Interest': 0.031, 'Serial Loan': False, 'Extra contributions': 0}
             ):
         self.name = name
         self.year = datetime.date.today().year # The year 
@@ -131,7 +131,7 @@ class Persons_Finance:
         df_Expected['Rent Income'] = self.housing['Rent']
         df_Expected['Necessities'] = self.mi*self.necessities_rate + self.housing['Rent']
         df_Expected['Wants'] = self.mi*self.wants_rate
-        df_Expected['Savings'] = self.mi*self.savings_rate
+        df_Expected['Savings'] = self.mi*self.savings_rate  
         df_Expected['Monthly Budget'] = [months[month-1]]
         expected_costs = self.mi*self.necessities_rate + self.mi*self.wants_rate + self.mi*self.savings_rate + self.housing['Rent']
         df_Expected['Expected Living Cost'] = expected_costs
@@ -160,6 +160,12 @@ class Persons_Finance:
             df_Actual['Savings'] = df_Actual['Savings'] - abs(diff)
             self.invest -= abs(diff)
             df_Actual['Actual Living Cost'] = df_Actual['Actual Living Cost'] - abs(diff)
+
+        # Removing the saving from investment into extra contributions to debt if it exists
+        extra_contributions_debt = (self.housing['Extra contributions'] + self.student_loan['Extra contributions'] + self.other_debt['Extra contributions'])
+        if extra_contributions_debt > 0:
+            self.invest -= extra_contributions_debt
+
 
         df_Expected = pd.DataFrame(df_Expected)
         df_Actual = pd.DataFrame(df_Actual)
@@ -536,7 +542,7 @@ if __name__ == '__main__':
                 housing_years = int(input("Boliglån Lengde i år: "))
                 housing_shared_costs = float(input("Felleskostnader: "))
                 housing_rent = float(input("Leieinntekter: "))
-                housing_extra_contributions = int(input("Ekstra månedlige betalinger: "))
+                housing_extra_contributions = float(input("Ekstra månedlige betalinger: "))
             else:
                 housing_loan = 0
                 housing_years = 2
@@ -553,7 +559,7 @@ if __name__ == '__main__':
                 student_loan = float(input("Studentlån: "))
                 student_interest = float(input("Lånets rente i %: "))/100
                 student_years = int(input("Lånets Lengde i år: "))
-                student_extra_contributions = int(input("Ekstra månedlige betalinger: "))
+                student_extra_contributions = float(input("Ekstra månedlige betalinger: "))
             else:
                 student_loan = 0
                 student_years = 2
@@ -568,7 +574,7 @@ if __name__ == '__main__':
                 other_loan = float(input("Annet Lån: "))
                 other_interest = float(input("Lånets rente i %: "))/100
                 other_years = int(input("Lånets Lengde i år: "))
-                other_extra_contributions = int(input("Ekstra månedlige betalinger: "))
+                other_extra_contributions = float(input("Ekstra månedlige betalinger: "))
             else:
                 other_loan = 0
                 other_years = 2
