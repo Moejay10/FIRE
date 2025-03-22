@@ -16,7 +16,7 @@ class Persons_Finance:
             bonus_income=0,
             saved=3.0E6, 
             necessities_rate=0.50, wants_rate=0.10, savings_rate=0.40, 
-            invest_info={'Interest': 0.08, 'Years': 15, 'Goal': 1.5E7, 'Invest': 0},
+            invest_info={'Interest': 0.08, 'Years': 11, 'Goal': 1.5E7, 'Invest': 0},
             tax_info={'min_deduction': 104450, 'personal_deduction': 88250, 'social_security_tax': 0.082, 'state_tax': 0.23, 'stage_tax': [0.017, 0.04, 0.136]},
             necessities={'Food': 4E3, 'Other': 4E3},
             housing={'Loan': 3.6E6, 'Start Time': datetime.datetime.strptime('15/08/2025', '%d/%m/%Y').date(), 'Years': 30, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 7E3, 'Rent': 6.5E3, 'Extra contributions': 0},
