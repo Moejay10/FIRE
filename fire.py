@@ -153,13 +153,24 @@ class Persons_Finance:
 
         diff = df_Expected['Expected Living Cost'] - df_Actual['Actual Living Cost'] # Calculating the difference in budgeted and actual costs
         if diff > 0:
+            self.invest += diff
             df_Actual['Savings'] = df_Actual['Savings'] + diff
-            self.invest += diff 
             df_Actual['Actual Living Cost'] = df_Actual['Actual Living Cost'] + diff
         else:
-            df_Actual['Savings'] = df_Actual['Savings'] - abs(diff)
             self.invest -= abs(diff)
+            df_Actual['Savings'] = df_Actual['Savings'] - abs(diff)
             df_Actual['Actual Living Cost'] = df_Actual['Actual Living Cost'] - abs(diff)
+
+        # Deciding how much to invest
+        print("Invest info: ", self.invest_info['Invest'])
+        print("Savings df: ", df_Actual['Savings'])
+        diff_invest = df_Actual['Savings'] - self.invest_info['Invest']
+        if self.invest_info != 0 and diff_invest > 0:
+            df_Actual['Savings'] = df_Actual['Savings'] - diff_invest
+            df_Actual['Other'] = df_Actual['Other'] + diff_invest
+        else:
+            self.invest_info['Invest'] = self.invest_info['Invest'] - abs(diff_invest)
+            
 
         # Removing the saving from investment into extra contributions to debt if it exists
         extra_contributions_debt = (self.housing['Extra contributions'] + self.student_loan['Extra contributions'] + self.other_debt['Extra contributions'])
@@ -170,6 +181,7 @@ class Persons_Finance:
         df_Expected = pd.DataFrame(df_Expected)
         df_Actual = pd.DataFrame(df_Actual)
         
+        # Investment
         invest_df = self.compound_Interest(self.invest_info['Interest'], self.invest_info['Years'], self.invest_info['Goal'], self.invest_info['Invest'])
         invest_df.rename(columns = {'Total':'Total Invested'}, inplace = True)
         total_debt = self.add_columns([house_df, student_debt_df, other_debt_df], ['Residual Loan of Housing', 'Residual Loan of Student Loan', 'Residual Loan of Shared Loan'])
@@ -353,9 +365,9 @@ class Persons_Finance:
         """
         Start = self.start
         if Invest == 0:
-            Contributions = self.invest # amount to invest each month
+            Contributions = self.invest # Investing the total savings left each month
         else:
-            Contributions = Invest # amount to invest each month
+            Contributions = Invest # Deciding the amount to invest each month
 
         years = np.arange(0, Years)
        
@@ -534,6 +546,21 @@ if __name__ == '__main__':
             bonus_income = float(input("Bonus: "))
             saved = float(input("Spart: "))
             
+            #Investering
+            how_much_to_invest = str(input("\nVil du bestemme hvor mye du vil investere (Ja/Nei): "))
+            if how_much_to_invest == "Ja":
+                interest = float(input("Avkastning i %: "))/100
+                investing_years = int(input("Investeringtid i år: "))
+                investing_goal = float(input("Investeringsmål: ")) 
+                investing_amount = float(input("Investeringsmengde pr måned: "))
+            else:
+                interest = 0.08
+                investing_years = 15
+                investing_goal = 1.5E7
+                investing_amount = 0 # Dette gjør slik at mengden investert er resten du har igjen i måneden
+            
+            investments={'Interest': interest, 'Years': investing_years, 'Goal': investing_goal, 'Invest': investing_amount}
+ 
             # Boliglån
             have_housing_loan = str(input("\nHar du boliglån (Ja/Nei): "))
             if have_housing_loan == "Ja":
@@ -585,6 +612,6 @@ if __name__ == '__main__':
             other={'Loan': other_loan, 'Start Time': datetime.date.today(), 'Years': other_years, 'Interest': other_interest, 'Serial Loan': False, 'Extra contributions': other_extra_contributions}
             
             
-            life = Persons_Finance(salary_income=salary_income, bonus_income=bonus_income, saved=saved, housing=housing, student_loan=student, other_debt=other)
+            life = Persons_Finance(salary_income=salary_income, bonus_income=bonus_income, saved=saved, invest_info=investments, housing=housing, student_loan=student, other_debt=other)
             life.living_expenses()
 
