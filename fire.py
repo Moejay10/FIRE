@@ -14,14 +14,14 @@ class Persons_Finance:
             birth_year=1996, 
             salary_income=7.8E5,
             bonus_income=0,
-            saved=3.0E6, 
+            saved=2.5E6, 
             necessities_rate=0.50, wants_rate=0.10, savings_rate=0.40, 
             invest_info={'Interest': 0.08, 'Years': 15, 'Goal': 1.5E7, 'Invest': 0},
             tax_info={'min_deduction': 104450, 'personal_deduction': 88250, 'social_security_tax': 0.082, 'state_tax': 0.23, 'stage_tax': [0.017, 0.04, 0.136]},
             necessities={'Food': 4E3, 'Other': 4E3},
-            housing={'Loan': 3.6E6, 'Start Time': datetime.datetime.strptime('15/08/2025', '%d/%m/%Y').date(), 'Years': 30, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 7E3, 'Rent': 6.5E3, 'Extra contributions': 0},
+            housing={'Loan': 3.2E6, 'Start Time': datetime.datetime.strptime('15/07/2025', '%d/%m/%Y').date(), 'Years': 30, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 5.0E3, 'Rent': 6.5E3, 'Extra contributions': 0},
             student_loan={'Loan': 6.0E5, 'Start Time': datetime.datetime.strptime('15/06/2026', '%d/%m/%Y').date(), 'Years': 20, 'Interest': 0.0535, 'Serial Loan': False, 'Extra contributions': 1.0E3},
-            other_debt={'Loan': 0E5, 'Start Time': datetime.datetime.strptime('15/09/2023', '%d/%m/%Y').date(), 'Years': 2, 'Interest': 0.031, 'Serial Loan': False, 'Extra contributions': 0}
+            other_debt={'Loan': 3.14E5, 'Start Time': datetime.datetime.strptime('15/07/2025', '%d/%m/%Y').date(), 'Years': 15, 'Interest': 0.053, 'Serial Loan': False, 'Extra contributions': 0}
             ):
         self.name = name
         self.year = datetime.date.today().year # The year 
@@ -162,14 +162,12 @@ class Persons_Finance:
             df_Actual['Actual Living Cost'] = df_Actual['Actual Living Cost'] - abs(diff)
 
         # Deciding how much to invest
-        print("Invest info: ", self.invest_info['Invest'])
-        print("Savings df: ", df_Actual['Savings'])
         diff_invest = df_Actual['Savings'] - self.invest_info['Invest']
-        if self.invest_info != 0 and diff_invest > 0:
+        if self.invest_info['Invest'] != 0 and diff_invest > 0:
             df_Actual['Savings'] = df_Actual['Savings'] - diff_invest
             df_Actual['Other'] = df_Actual['Other'] + diff_invest
         else:
-            self.invest_info['Invest'] = self.invest_info['Invest'] - abs(diff_invest)
+            self.invest_info['Invest'] = 0
             
 
         # Removing the saving from investment into extra contributions to debt if it exists
