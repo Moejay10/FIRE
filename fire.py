@@ -19,7 +19,7 @@ class Persons_Finance:
             invest_info={'Interest': 0.08, 'Years': 15, 'Goal': 1.5E7, 'Invest': 0},
             tax_info={'min_deduction': 104450, 'personal_deduction': 88250, 'social_security_tax': 0.082, 'state_tax': 0.23, 'stage_tax': [0.017, 0.04, 0.136]},
             necessities={'Food': 4E3, 'Other': 4E3},
-            housing={'Loan': 3.15E6, 'Start Time': datetime.datetime.strptime('15/07/2025', '%d/%m/%Y').date(), 'Years': 30, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 5.0E3, 'Rent': 6.5E3, 'Extra contributions': 0},
+            housing={'Loan': 3.2E6, 'Start Time': datetime.datetime.strptime('15/08/2025', '%d/%m/%Y').date(), 'Years': 30, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 5.0E3, 'Rent': 6.5E3, 'Extra contributions': 4E3},
             student_loan={'Loan': 6.0E5, 'Start Time': datetime.datetime.strptime('15/06/2026', '%d/%m/%Y').date(), 'Years': 20, 'Interest': 0.0535, 'Serial Loan': False, 'Extra contributions': 1.0E3},
             other_debt={'Loan': 3.14E5, 'Start Time': datetime.datetime.strptime('15/07/2025', '%d/%m/%Y').date(), 'Years': 15, 'Interest': 0.053, 'Serial Loan': False, 'Extra contributions': 0}
             ):
@@ -127,6 +127,9 @@ class Persons_Finance:
         self.mi = (self.netto/12) # monthly income after tax 
         self.invest = self.savings_rate*self.mi # amount to invest each month
         
+        extra_debt_contributions = self.housing['Extra contributions'] + self.student_loan['Extra contributions'] + self.other_debt['Extra contributions']
+        self.invest -= extra_debt_contributions # deducting the extra debt payments to housing and student loans
+        
         df_Expected['Job Income'] = self.mi
         df_Expected['Rent Income'] = self.housing['Rent']
         df_Expected['Necessities'] = self.mi*self.necessities_rate + self.housing['Rent']
@@ -148,34 +151,29 @@ class Persons_Finance:
 
         df_Actual['Food'] = self.necessities['Food']
         df_Actual['Other'] = self.necessities['Other'] 
-        df_Actual['Savings'] = self.invest
-        df_Actual['Actual Living Cost'] = df_Actual['Housing'] + df_Actual['Student Loan'] + df_Actual['Shared Loan'] + df_Actual['Food'] + df_Actual['Other'] + df_Actual['Shared Costs'] + df_Actual['Savings']   
+        df_Actual['Investing'] = self.invest - extra_debt_contributions
+        df_Actual['Debt Cont'] = extra_debt_contributions
+        df_Actual['Actual Living Cost'] = df_Actual['Housing'] + df_Actual['Student Loan'] + df_Actual['Shared Loan'] + df_Actual['Food'] + df_Actual['Other'] + df_Actual['Shared Costs'] + df_Actual['Investing'] + df_Actual['Debt Cont']   
 
         diff = df_Expected['Expected Living Cost'] - df_Actual['Actual Living Cost'] # Calculating the difference in budgeted and actual costs
         if diff > 0:
             self.invest += diff
-            df_Actual['Savings'] = df_Actual['Savings'] + diff
+            df_Actual['Investing'] = df_Actual['Investing'] + diff
             df_Actual['Actual Living Cost'] = df_Actual['Actual Living Cost'] + diff
         else:
             self.invest -= abs(diff)
-            df_Actual['Savings'] = df_Actual['Savings'] - abs(diff)
+            df_Actual['Investing'] = df_Actual['Investing'] - abs(diff)
             df_Actual['Actual Living Cost'] = df_Actual['Actual Living Cost'] - abs(diff)
 
         # Deciding how much to invest
-        diff_invest = df_Actual['Savings'] - self.invest_info['Invest']
+        diff_invest = df_Actual['Investing'] - self.invest_info['Invest']
         if self.invest_info['Invest'] != 0 and diff_invest > 0:
-            df_Actual['Savings'] = df_Actual['Savings'] - diff_invest
+            df_Actual['Investing'] = df_Actual['Investing'] - diff_invest
             df_Actual['Other'] = df_Actual['Other'] + diff_invest
         else:
             self.invest_info['Invest'] = 0
             
-
-        # Removing the saving from investment into extra contributions to debt if it exists
-        extra_contributions_debt = (self.housing['Extra contributions'] + self.student_loan['Extra contributions'] + self.other_debt['Extra contributions'])
-        if extra_contributions_debt > 0:
-            self.invest -= extra_contributions_debt
-
-
+       
         df_Expected = pd.DataFrame(df_Expected)
         df_Actual = pd.DataFrame(df_Actual)
         
