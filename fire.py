@@ -14,12 +14,12 @@ class Persons_Finance:
             birth_year=1996, 
             salary_income=7.8E5,
             bonus_income=0,
-            saved=2.5E6, 
+            saved=2.7E6, 
             necessities_rate=0.50, wants_rate=0.10, savings_rate=0.40, 
-            invest_info={'Interest': 0.08, 'Years': 15, 'Goal': 1.5E7, 'Invest': 0},
+            invest_info={'Interest': 0.08, 'Years': 20, 'Goal': 1.5E7, 'Invest': 0},
             tax_info={'min_deduction': 104450, 'personal_deduction': 88250, 'social_security_tax': 0.082, 'state_tax': 0.23, 'stage_tax': [0.017, 0.04, 0.136]},
             necessities={'Food': 4E3, 'Other': 4E3},
-            housing={'Loan': 3.2E6, 'Start Time': datetime.datetime.strptime('15/08/2025', '%d/%m/%Y').date(), 'Years': 30, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 5.0E3, 'Rent': 6.5E3, 'Extra contributions': 4E3},
+            housing={'Loan': 3.2E6, 'Start Time': datetime.datetime.strptime('15/08/2025', '%d/%m/%Y').date(), 'Years': 30, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 5.0E3, 'Rent': 6.5E3, 'Extra contributions': 4.0E3},
             student_loan={'Loan': 6.0E5, 'Start Time': datetime.datetime.strptime('15/06/2026', '%d/%m/%Y').date(), 'Years': 20, 'Interest': 0.0535, 'Serial Loan': False, 'Extra contributions': 1.0E3},
             other_debt={'Loan': 3.14E5, 'Start Time': datetime.datetime.strptime('15/07/2025', '%d/%m/%Y').date(), 'Years': 15, 'Interest': 0.053, 'Serial Loan': False, 'Extra contributions': 0}
             ):
@@ -125,7 +125,7 @@ class Persons_Finance:
         self.netto = self.salary*(1-self.tr) # yearly income after tax
         self.tax = self.salary*self.tr # yearly amount which is paid to taxes
         self.mi = (self.netto/12) # monthly income after tax 
-        self.invest = self.savings_rate*self.mi # amount to invest each month
+        self.invest = self.savings_rate*self.mi # expected amount to invest each month
         
         extra_debt_contributions = self.housing['Extra contributions'] + self.student_loan['Extra contributions'] + self.other_debt['Extra contributions']
         self.invest -= extra_debt_contributions # deducting the extra debt payments to housing and student loans
@@ -151,7 +151,7 @@ class Persons_Finance:
 
         df_Actual['Food'] = self.necessities['Food']
         df_Actual['Other'] = self.necessities['Other'] 
-        df_Actual['Investing'] = self.invest - extra_debt_contributions
+        df_Actual['Investing'] = self.invest
         df_Actual['Debt Cont'] = extra_debt_contributions
         df_Actual['Actual Living Cost'] = df_Actual['Housing'] + df_Actual['Student Loan'] + df_Actual['Shared Loan'] + df_Actual['Food'] + df_Actual['Other'] + df_Actual['Shared Costs'] + df_Actual['Investing'] + df_Actual['Debt Cont']   
 
@@ -168,6 +168,7 @@ class Persons_Finance:
         # Deciding how much to invest
         diff_invest = df_Actual['Investing'] - self.invest_info['Invest']
         if self.invest_info['Invest'] != 0 and diff_invest > 0:
+            self.invest -= diff_invest
             df_Actual['Investing'] = df_Actual['Investing'] - diff_invest
             df_Actual['Other'] = df_Actual['Other'] + diff_invest
         else:
@@ -176,7 +177,6 @@ class Persons_Finance:
        
         df_Expected = pd.DataFrame(df_Expected)
         df_Actual = pd.DataFrame(df_Actual)
-        
         # Investment
         invest_df = self.compound_Interest(self.invest_info['Interest'], self.invest_info['Years'], self.invest_info['Goal'], self.invest_info['Invest'])
         invest_df.rename(columns = {'Total':'Total Invested'}, inplace = True)
@@ -366,7 +366,6 @@ class Persons_Finance:
             Contributions = Invest # Deciding the amount to invest each month
 
         years = np.arange(0, Years)
-       
         r = Interest
         F = {}
         # Calculating the start
