@@ -19,7 +19,7 @@ class Persons_Finance:
             invest_info={'Interest': 0.08, 'Years': 20, 'Goal': 1.5E7, 'Invest': 0},
             tax_info={'min_deduction': 104450, 'personal_deduction': 88250, 'social_security_tax': 0.082, 'state_tax': 0.23, 'stage_tax': [0.017, 0.04, 0.136]},
             necessities={'Food': 4E3, 'Other': 4E3},
-            housing={'Loan': 3.2E6, 'Start Time': datetime.datetime.strptime('15/08/2025', '%d/%m/%Y').date(), 'Years': 30, 'Interest': 0.056, 'Serial Loan': False, 'Shared Costs': 5.0E3, 'Rent': 6.5E3, 'Extra contributions': 4.0E3},
+            housing={'Loan': 3.2E6, 'Start Time': datetime.datetime.strptime('15/08/2025', '%d/%m/%Y').date(), 'Years': 30, 'Interest': 0.0555, 'Serial Loan': False, 'Shared Costs': 5.0E3, 'Rent': 6.5E3, 'Extra contributions': 4.0E3},
             student_loan={'Loan': 6.0E5, 'Start Time': datetime.datetime.strptime('15/06/2026', '%d/%m/%Y').date(), 'Years': 20, 'Interest': 0.0535, 'Serial Loan': False, 'Extra contributions': 1.0E3},
             other_debt={'Loan': 3.14E5, 'Start Time': datetime.datetime.strptime('15/07/2025', '%d/%m/%Y').date(), 'Years': 15, 'Interest': 0.053, 'Serial Loan': False, 'Extra contributions': 0}
             ):
