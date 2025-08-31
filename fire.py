@@ -12,15 +12,15 @@ class Persons_Finance:
     def __init__(self, 
             name="Mohamed Ismail", 
             birth_year=1996, 
-            salary_income=7.65E5,
+            salary_income=7.8E5,
             bonus_income=0,
-            saved=2.3E6, 
+            saved=2.5E6, 
             necessities_rate=0.50, wants_rate=0.10, savings_rate=0.40, 
             invest_info={'Interest': 0.08, 'Years': 20, 'Goal': 1.5E7, 'Invest': 0},
             tax_info={'min_deduction': 104450, 'personal_deduction': 88250, 'social_security_tax': 0.082, 'state_tax': 0.23, 'stage_tax': [0.017, 0.04, 0.136]},
             necessities={'Food': 3.5E3, 'Other': 4.5E3},
-            housing={'Loan': 3.2E6, 'Start Time': datetime.datetime.strptime('15/08/2025', '%d/%m/%Y').date(), 'Years': 30, 'Interest': 0.0525, 'Serial Loan': False, 'Shared Costs': 7.5E3, 'Rent': 6.5E3, 'Extra contributions': 0.0E3},
-            student_loan={'Loan': 6.0E5, 'Start Time': datetime.datetime.strptime('15/06/2026', '%d/%m/%Y').date(), 'Years': 20, 'Interest': 0.0535, 'Serial Loan': False, 'Extra contributions': 1.0E3},
+            housing={'Loan': 2.6E6, 'Start Time': datetime.datetime.strptime('15/08/2025', '%d/%m/%Y').date(), 'Years': 11, 'Interest': 0.0325, 'Serial Loan': False, 'Shared Costs': 7.5E3, 'Rent': 10.0E3, 'Extra contributions': 5.0E3},
+            student_loan={'Loan': 6.0E5, 'Start Time': datetime.datetime.strptime('15/06/2026', '%d/%m/%Y').date(), 'Years': 11, 'Interest': 0.0335, 'Serial Loan': False, 'Extra contributions': 0.0E3},
             other_debt={'Loan': 0.0E5, 'Start Time': datetime.datetime.strptime('15/07/2025', '%d/%m/%Y').date(), 'Years': 15, 'Interest': 0.053, 'Serial Loan': False, 'Extra contributions': 0}
             ):
         self.name = name
