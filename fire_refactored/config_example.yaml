@@ -1,0 +1,12 @@
+# Example tax/config parameters (Norway, 2025-ish). These are illustrative and should be updated from official sources.
+ordinary_tax_rate: 0.22
+social_security_rate: 0.079
+bracket_thresholds: [217400, 306050, 697150, 942400, 1410750]
+bracket_rates: [0.0, 0.017, 0.04, 0.137, 0.167, 0.177]
+wealth_threshold_single: 1760000
+wealth_state_rate: 0.00475
+wealth_state_rate_high: 0.00575
+municipal_wealth_rate: 0.0075
+capital_gains_tax_rate: 0.22
+ips_contribution_limit: 15000
+charity_deduction_limit: 50000
