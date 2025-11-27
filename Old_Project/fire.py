@@ -20,7 +20,7 @@ class Persons_Finance:
             tax_info={'min_deduction': 104450, 'personal_deduction': 88250, 'social_security_tax': 0.082, 'state_tax': 0.23, 'stage_tax': [0.017, 0.04, 0.136]},
             necessities={'Food': 4.5E3, 'Other': 3.5E3},
             housing={'Loan': 2.7E6, 'Start Time': datetime.datetime.strptime('15/08/2026', '%d/%m/%Y').date(), 'Years': 14, 'Interest': 0.05, 'Serial Loan': False, 'Shared Costs': 9.0E3, 'Rent': 1.2E4, 'Extra contributions': 0.0E3},
-            student_loan={'Loan': 7.0E5, 'Start Time': datetime.datetime.strptime('15/01/2027', '%d/%m/%Y').date(), 'Years': 15, 'Interest': 0.05, 'Serial Loan': False, 'Extra contributions': 0.0E3},
+            student_loan={'Loan': 7.0E5, 'Start Time': datetime.datetime.strptime('15/01/2027', '%d/%m/%Y').date(), 'Years': 10, 'Interest': 0.05, 'Serial Loan': False, 'Extra contributions': 0.0E3},
             other_debt={'Loan': 0.0E5, 'Start Time': datetime.datetime.strptime('15/07/2025', '%d/%m/%Y').date(), 'Years': 1, 'Interest': 0.053, 'Serial Loan': False, 'Extra contributions': 0}
             ):
         self.name = name
